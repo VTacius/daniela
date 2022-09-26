@@ -1,6 +1,6 @@
 [package]
 name = "daniela"
-version = "0.0.0"
+version = "0.1.0"
 edition = "2021"
 
 [lib]
@@ -17,6 +17,7 @@ pg_test = []
 
 [dependencies]
 pgx = "=0.4.5"
+serde = { version = "1.0.145", features = ["derive"] }
 
 [dev-dependencies]
 pgx-tests = "=0.4.5"

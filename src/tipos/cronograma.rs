@@ -1,11 +1,20 @@
 use std::collections::HashMap;
 
-use crate::Tick;
-use crate::Horario;
+//use pgx::StringInfo;
+//use pgx::JsonInOutFuncs;
+//use pgx::PostgresType;
+//use pgx::WithTypeIds;
+//use pgx::pg_extern;
 
-#[derive(Debug)]
+use pgx::*;
+use serde::{Deserialize, Serialize};
+
+use super::Tick;
+use super::Horario;
+
+#[derive(Debug, Deserialize, Serialize, PostgresType)]
 pub struct Cronograma {
-    pub sentencias: Vec<Horario>,
+    pub sentencias: Vec<String>,
     pub contenido: HashMap<u8, Vec<Tick>>,
 }
 
@@ -30,7 +39,9 @@ impl Cronograma {
             };
 
         }
-
+        
+        // La convertirmos a string
+        let sentencias = sentencias.iter().map(|s| s.to_string()).collect();
         Cronograma{ contenido, sentencias }
     }
 

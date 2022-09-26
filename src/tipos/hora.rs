@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::ops::Add;
 
 #[derive(Debug)]
@@ -45,6 +46,12 @@ impl PartialEq for Hora {
 }
 
 impl Eq for Hora {}
+
+impl Display for Hora {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}", self.hora, self.minuto)
+    }
+}
 
 #[cfg(test)]
 mod test {

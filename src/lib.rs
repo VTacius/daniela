@@ -1,7 +1,10 @@
 mod tipos;
-use pgx::*;
+mod parser;
+
 use tipos::Cronograma;
 use tipos::Horario;
+
+use pgx::*;
 
 pg_module_magic!();
 
@@ -13,7 +16,7 @@ fn hello_daniela() -> &'static str {
 fn buscar_en_cronograma(cronograma: Cronograma, ts: pgx::Timestamp, permisivo: bool) -> bool {
     let dia = ts.weekday().number_from_sunday();
     let hash = (ts.hour() as u16 * 60) + ts.minute() as u16;
-    match cronograma.contenido.get(&dia) {
+    match cronograma.horarios.get(&dia) {
        None => permisivo,
        Some(e) => e.iter().find(|t| t.contiene(hash)).is_some(),
     }
@@ -30,12 +33,14 @@ fn en_cronograma_permisivo(cronograma: Cronograma, ts: pgx::Timestamp) -> bool {
 }
 
 #[pg_extern]
-fn crear_cronograma(datos :&str)  -> Cronograma {
-    let sentencias = datos
-        .split(&['\n', ';'])
-        .map(|d| Horario::new(d))
-        .filter(|d| d.is_some())
-        .map(|d| d.unwrap()).collect();
+fn crear_cronograma(contenido: &str)  -> Cronograma {
+    let sentencias: Vec<Horario> = contenido
+        .split(&['\n', ','])
+        .map(|linea|{
+            parser::parsear_linea(linea.trim())
+        })
+        .collect();
+    
     Cronograma::new(sentencias)
 }
 

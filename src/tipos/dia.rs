@@ -27,20 +27,7 @@ impl Dia {
             Dia::Miercoles => Day {nombre: "Miércoles".to_owned(), actual: 4, siguiente: 5},
             Dia::Jueves => Day {nombre: "Jueves".to_owned(), actual: 5, siguiente: 6},
             Dia::Viernes => Day {nombre: "Viernes".to_owned(), actual: 6, siguiente: 7},
-            Dia::Sabado => Day {nombre: "Domingo".to_owned(), actual: 7,  siguiente: 1},
-        }
-    }
-
-    pub fn set(frase: &str) -> Dia {
-        match frase {
-            "Dom" => Self::Domingo,
-            "Lun" => Self::Lunes,
-            "Mar" => Self::Martes,
-            "Mie" => Self::Miercoles,
-            "Jue" => Self::Jueves,
-            "Vie" => Self::Viernes,
-            "Sab" => Self::Sabado,
-            &_ => todo!()
+            Dia::Sabado => Day {nombre: "Sábado".to_owned(), actual: 7,  siguiente: 1},
         }
     }
 }

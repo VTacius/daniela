@@ -9,32 +9,13 @@ pub struct Hora {
 }
 
 impl Hora {
-    pub fn from_str(marca: &str) -> Option<Hora> {
-        let componentes = match marca.split_once(":") {
-            None => return None,
-            Some((v, h)) => (v, h),
-        };
-        
-        let hora :u8 = match componentes.0.parse() {
-            Err(_) => return None,
-            Ok(v) => v
-        };
-        
-        let minuto :u8 = match componentes.1.parse(){
-            Err(_) => return None,
-            Ok(v) => v
-        };
+    pub fn from_parser(hora: &str, minuto: &str) -> Hora {
+        // Como viene de un parser, tenemos que asumir que los valores están bien
+        let hora: u8 = hora.parse().unwrap();
+        let minuto: u8 = minuto.parse().unwrap();
         
         let hash = (hora as u16 * 60).add(minuto as u16);
-        Some(Hora { hora, minuto, hash})
-    }
-
-    // TODO: Validar que no se pase de 24 hora
-    fn from_int(marca :u16) -> Hora {
-        let hora = (marca / 60) as u8;
-        let minuto = (marca / 60) as u8;
-       
-        Hora { hora, minuto, hash: marca }
+        Hora { hora, minuto, hash}
     }
 
 }
@@ -53,20 +34,26 @@ impl Display for Hora {
     }
 }
 
+impl PartialOrd for Hora {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+       self.hash.partial_cmp(&other.hash) 
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
-    fn test_crear_marca_temporal_de_cadena() {
-        let ts = Hora::from_str("2:34");
-        assert_eq!(ts, Some(Hora{hora: 2, minuto: 34, hash: 154}));
+    fn test_crear_de_parser(){
+        let ts = Hora::from_parser("08", "23");
+        assert_eq!(ts, Hora{hora: 8, minuto: 23, hash: 503});
     }
 
     #[test]
-    fn test_crear_marca_temporal_de_int(){
-        let ts = Hora::from_int(450);
-        assert_eq!(ts, Hora{hora: 7, minuto: 30, hash: 450});
+    fn test_comparacion(){
+        let menor = Hora::from_parser("08", "30");
+        let mayor = Hora::from_parser("09", "30");
+        assert!(menor < mayor);
     }
-
 }

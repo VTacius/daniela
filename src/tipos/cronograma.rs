@@ -58,6 +58,11 @@ fn convertir_horario_to_tick(horario: &Horario) -> Vec<(u8, Tick)>{
     }
 }
 
+#[derive(Copy, Clone)]
+struct Declaracion {
+    pub lista: [u8; 3],
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

@@ -8,11 +8,6 @@ use pgx::*;
 
 pg_module_magic!();
 
-#[pg_extern]
-fn hello_daniela() -> &'static str {
-    "Hello, daniela"
-}
-
 fn buscar_en_cronograma(cronograma: Cronograma, ts: pgx::Timestamp, permisivo: bool) -> bool {
     let dia = ts.weekday().number_from_sunday();
     let hash = (ts.hour() as u16 * 60) + ts.minute() as u16;
@@ -33,6 +28,11 @@ fn en_cronograma_permisivo(cronograma: Cronograma, ts: pgx::Timestamp) -> bool {
 }
 
 #[pg_extern]
+fn mostrar_cronograma(cronograma: Cronograma) -> String {
+    cronograma.sentencias.join("\n")
+}
+
+#[pg_extern]
 fn crear_cronograma(contenido: &str)  -> Cronograma {
     let sentencias: Vec<Horario> = contenido
         .split(&['\n', ','])
@@ -42,18 +42,6 @@ fn crear_cronograma(contenido: &str)  -> Cronograma {
         .collect();
     
     Cronograma::new(sentencias)
-}
-
-#[cfg(any(test, feature = "pg_test"))]
-#[pg_schema]
-mod tests {
-    use pgx::*;
-
-    #[pg_test]
-    fn test_hello_daniela() {
-        assert_eq!("Hello, daniela", crate::hello_daniela());
-    }
-
 }
 
 #[cfg(test)]

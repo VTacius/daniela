@@ -1,4 +1,3 @@
-use std::process;
 use pest::{Parser, iterators::Pair};
 use pest_derive::Parser;
 
@@ -16,14 +15,14 @@ pub fn parsear_linea(sentencia: &str) -> Horario {
     //let contenido = "Lun: 7:30 - 8:40";
     let mut parseo = match CronogramaParser::parse(Rule::HORARIO, sentencia){
         Err(e) => {
-            println!("{}", e.to_string());
-            process::exit(1);
+            panic!("{}", e.to_string());
         },
         Ok(v) => {
             v
         }
     };
 
+    // Estamos suponiendo que la estructura de datos es correcta, y que por eso podemos usar tantos unwrap
     let pr = parseo.next().unwrap();
     let mut contenido = pr.into_inner();
     

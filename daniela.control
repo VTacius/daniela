@@ -1,4 +1,4 @@
-comment = 'daniela:  Created by pgx'
+comment = 'daniela:  Tipo para horarios'
 default_version = '@CARGO_VERSION@'
 module_pathname = '$libdir/daniela'
 relocatable = false

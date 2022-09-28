@@ -1,5 +1,11 @@
 # daniela
 ## Para desarrollo
+Para correr la extensión en un entorno de prueba:
+```bash
+cargo pgx run pg14
+```
+
+Los siguiente muestra una prueba de su funcionalidad:
 ```sql
 drop table cronogramas;
 drop extension daniela;

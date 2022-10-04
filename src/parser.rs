@@ -1,58 +1,134 @@
-use pest::{Parser, iterators::Pair};
-use pest_derive::Parser;
 
-use crate::tipos::Horario;
-use crate::tipos::Hora;
-use crate::tipos::Dia;
+use std::fmt::Display;
+use logos::Logos;
 
-#[derive(Parser)]
-#[grammar = "cronograma.pest"]
-struct CronogramaParser {
+use crate::tipos::{Dia, Hora, Horario};
 
-}
 
-pub fn parsear_linea(sentencia: &str) -> Horario {
-    //let contenido = "Lun: 7:30 - 8:40";
-    let mut parseo = match CronogramaParser::parse(Rule::HORARIO, sentencia){
-        Err(e) => {
-            panic!("{}", e.to_string());
-        },
-        Ok(v) => {
-            v
-        }
-    };
+#[derive(Logos, Debug, PartialEq)]
+enum Dict {
 
-    // Estamos suponiendo que la estructura de datos es correcta, y que por eso podemos usar tantos unwrap
-    let pr = parseo.next().unwrap();
-    let mut contenido = pr.into_inner();
+    #[regex(r"lune?s?")]
+    Lunes,
+  
+    #[regex(r"mart?e?s?")]
+    Martes,
+
+    #[regex(r"mi[eé]r?c?o?l?e?s?")]
+    Miercoles,
+
+    #[regex(r"juev?e?s?")]
+    Jueves,
+
+    #[regex(r"vier?n?e?s?")]
+    Viernes,
+
+    #[regex(r"s[aá]ba?d?o?")]
+    Sabado,
     
-    let dia = crear_dia(contenido.next().unwrap());
-    let inicio = crear_hora(contenido.next().unwrap());
-    let fin = crear_hora(contenido.next().unwrap());
-   
-    Horario::new(dia, inicio, fin)
+    #[regex(r"domi?n?g?o?")]
+    Domingo,
+  
+    // 01:20 AM, 7:30 AM
+    #[regex(r"0?[0-9]:[0-5][0-9](\s?[aApP]\.?[mM]\.?)?")]
+    // 11:30 A.M 11:50 p.m
+    #[regex(r"1[0-9]:[0-5][0-9](\s?[aApP]\.?[mM]\.?)?")]
+    // 23:40
+    #[regex(r"2[0-3]:[0-5][0-9](\s?[aApP]\.?[mM]\.?)?")]
+    Hora, 
+
+    #[error]
+    #[regex(r"[ \t]", logos::skip)]
+    Error,
 }
 
-fn crear_dia(pr: Pair<Rule>) -> Dia {
-    let mut contenido = pr.into_inner();
-    let dia = contenido.next().unwrap();
-    match dia.as_rule() {
-        Rule::DOM => Dia::Domingo, 
-        Rule::LUN => Dia::Lunes, 
-        Rule::MAR => Dia::Martes, 
-        Rule::MIE => Dia::Miercoles, 
-        Rule::JUE => Dia::Jueves, 
-        Rule::VIE => Dia::Viernes, 
-        Rule::SAB => Dia::Sabado,
-        
-        _ => todo!(), 
+pub fn parsear_contenido(contenido: &str) -> Result<Vec<Horario>, UbicacionError> {
+    let lineas: Vec<_>= contenido.split(&['\n', ';']).map(|linea| linea.to_lowercase()).collect();
+    let mut horarios: Vec<Horario> = vec![];
+    
+    for (orden, linea) in lineas.iter().enumerate() {
+        match procesar_linea(orden,&linea) {
+            Ok(horario) => horarios.push(horario) ,
+            Err(e) => return Err(e),
+        }
+    }
+
+    return Ok(horarios);
+
+}
+
+#[derive(Debug, Clone)]
+enum TipoError {
+    Dia,
+    Inicio,
+    Fin, 
+    Terminal
+}
+
+#[derive(Debug, Clone)]
+pub struct UbicacionError {
+    tipo: TipoError,
+    linea: usize,
+    caracter: usize
+}
+
+impl UbicacionError {
+    fn new(tipo: TipoError, linea: usize, caracter: usize) -> UbicacionError {
+        UbicacionError{tipo, linea, caracter}
     }
 }
 
-fn crear_hora(pr: Pair<Rule>) -> Hora {
-    let mut contenido = pr.into_inner();
-    let hora = contenido.next().unwrap();
-    let minuto = contenido.next().unwrap();
+impl Display for UbicacionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Error en linea {:} caracter {:}", self.linea, self.caracter) 
+    }
+}
 
-    Hora::from_parser(hora.as_str(), minuto.as_str())
+fn procesar_linea(orden: usize, linea: &str) -> Result<Horario, UbicacionError>{
+    let  mut lex = Dict::lexer(linea);
+   
+    // Primero, sacamos el día y lo convertimos a nuestra conocido enum
+    let dia = match lex.next() {
+        Some(Dict::Lunes) => Dia::Lunes,
+        Some(Dict::Martes) => Dia::Martes,
+        Some(Dict::Miercoles) => Dia::Miercoles,
+        Some(Dict::Jueves) => Dia::Jueves,
+        Some(Dict::Viernes) => Dia::Viernes,
+        Some(Dict::Sabado) => Dia::Sabado,
+        Some(Dict::Domingo) => Dia::Domingo,
+        _ => return Err(UbicacionError::new(TipoError::Dia, orden, lex.span().start))
+    };
+   
+    // TODO: ¿Podés reutilizar un poco acá
+    // Sacamos la hora inicial. Primero aseguramos que haya un siguiente token...
+    let inicio = match lex.next() {
+        Some(Dict::Hora)  => Hora::from_lexer(lex.slice()),
+        _ => return Err(UbicacionError::new(TipoError::Inicio, orden, lex.span().start))
+    };
+    
+    // ...Y luego que el formato sea adecuado
+    let inicio = match inicio {
+        Some(hora) => hora,
+        None => return Err(UbicacionError::new(TipoError::Inicio, orden, lex.span().start))
+    };
+    
+   
+    // De nuevo, ahora con hora final. Nos aseguramos de que haya un siguiente token...
+    let fin = match lex.next() {
+        Some(Dict::Hora)  => Hora::from_lexer(lex.slice()),
+        _ => return Err(UbicacionError::new(TipoError::Fin, orden, lex.span().start))
+    };
+
+    // ... Y luego, que el formato sea el adecuado
+    let fin = match fin {
+        Some(hora) => hora,
+        None => return Err(UbicacionError::new(TipoError::Fin, orden, lex.span().start))
+    };
+
+    // Nos aseguramos que este haya sido el final del viaje
+    if let Some(_) = lex.next() {
+        return Err(UbicacionError::new(TipoError::Terminal, orden, lex.span().start))
+    } 
+
+    Ok(Horario::new(dia, inicio, fin))
 }

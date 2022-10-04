@@ -34,14 +34,12 @@ fn mostrar_cronograma(cronograma: Cronograma) -> String {
 
 #[pg_extern]
 fn crear_cronograma(contenido: &str)  -> Cronograma {
-    let sentencias: Vec<Horario> = contenido
-        .split(&['\n', ','])
-        .map(|linea|{
-            parser::parsear_linea(linea.trim())
-        })
-        .collect();
+    let horarios: Vec<Horario> = match parser::parsear_contenido(contenido) {
+        Ok(horarios) => horarios,
+        Err(_e) => {panic!("Error que aun no mostraremos")}
+    };
     
-    Cronograma::new(sentencias)
+    Cronograma::new(horarios)
 }
 
 #[cfg(test)]

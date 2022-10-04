@@ -58,11 +58,6 @@ fn convertir_horario_to_tick(horario: &Horario) -> Vec<(u8, Tick)>{
     }
 }
 
-#[derive(Copy, Clone)]
-struct Declaracion {
-    pub lista: [u8; 3],
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -70,8 +65,15 @@ mod test {
 
     #[test]
     fn test_particiona_intervalo(){
-        let horario = Horario::new(Dia::Sabado, Hora::from_parser("20", "22"), Hora::from_parser("1", "1"));
+        let horario = Horario::new(Dia::Sabado, Hora::from_lexer("20:22").unwrap(), Hora::from_lexer("1:1").unwrap());
         let elemento = convertir_horario_to_tick(&horario);
         assert_eq!(elemento, vec![(7, Tick{inicio: 1222, fin: 1440} ), (1, Tick{inicio: 0, fin: 61})]);
+    }
+    
+    #[test]
+    fn test_particiona_intervalo_caso_02(){
+    let horario = Horario::new(Dia::Sabado, Hora::from_lexer("7:00 PM").unwrap(), Hora::from_lexer("7:00AM").unwrap());
+        let elemento = convertir_horario_to_tick(&horario);
+        assert_eq!(elemento, vec![(7, Tick{inicio: 1140, fin: 1440} ), (1, Tick{inicio: 0, fin: 420})]);
     }
 }

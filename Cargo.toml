@@ -16,6 +16,7 @@ pg14 = ["pgx/pg14", "pgx-tests/pg14" ]
 pg_test = []
 
 [dependencies]
+logos = "0.12.1"
 pest = "2.3.1"
 pest_derive = "2.3.1"
 pgx = "=0.4.5"
